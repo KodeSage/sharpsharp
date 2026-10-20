@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Loader2, Plus, CheckCircle2, AlertCircle, Sparkles, Trash2 } from 'lucide-react';
-import { motion, useMotionValue, useTransform, animate } from 'motion/react';
+import { motion, useMotionValue, animate } from 'motion/react';
 import { supabase } from '@/lib/supabase';
 import { saveShop, normalizeWhatsapp } from '@/lib/shop';
 import { parseCatalog, type ParsedItem } from '@/lib/parseCatalog';
@@ -57,7 +57,6 @@ function StopwatchPill({ seconds }: { seconds: number }) {
 /* ---------- Rolling count ---------- */
 function RollingCount({ target }: { target: number }) {
   const count = useMotionValue(0);
-  const rounded = useTransform(count, (v) => Math.round(v).toString());
   const [display, setDisplay] = useState('0');
 
   useEffect(() => {
@@ -142,7 +141,7 @@ export default function Create() {
   const [whatsapp, setWhatsapp] = useState('');
   const [hours, setHours] = useState('');
   const [brandColor, setBrandColor] = useState('#FF5A1F');
-  const [tagline, setTagline] = useState('');
+  const [tagline] = useState('');
   const [catalogText, setCatalogText] = useState('');
   const [items, setItems] = useState<EditableItem[]>([]);
 

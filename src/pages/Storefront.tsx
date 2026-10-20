@@ -38,7 +38,7 @@ function emojiFor(category: string): string {
 
 /* ---------- Hours parsing ---------- */
 function parseOpenNow(hours: string): { open: boolean; label: string } | null {
-  const match = hours.match(/(\d{1,2})\s*(?:am|pm)?\s*[–\-]\s*(\d{1,2})\s*(am|pm)/i);
+  const match = hours.match(/(\d{1,2})\s*(?:am|pm)?\s*[–-]\s*(\d{1,2})\s*(am|pm)/i);
   if (!match) return null;
 
   const now = new Date();
@@ -52,8 +52,8 @@ function parseOpenNow(hours: string): { open: boolean; label: string } | null {
     return hour * 60;
   };
 
-  let startH = parseInt(match[1], 10);
-  let endH = parseInt(match[2], 10);
+  const startH = parseInt(match[1], 10);
+  const endH = parseInt(match[2], 10);
   const endPeriod = match[3];
 
   const endM = toMinutes(endH, endPeriod);
@@ -604,7 +604,6 @@ export default function Storefront() {
             cart={cart}
             total={cartTotal}
             shopName={shop.name}
-            shopUrl={`${window.location.origin}/s/${shop.slug}`}
             customerName={customerName}
             delivery={delivery}
             orderSent={orderSent}
@@ -780,7 +779,7 @@ function MessagePreview({ message, shopName }: { message: string; shopName: stri
 
 /* ---------- Success state inside sheet ---------- */
 
-function OrderSentState({ shopName, shopUrl }: { shopName: string; shopUrl: string }) {
+function OrderSentState({ shopName }: { shopName: string }) {
   const reduced = prefersReducedMotion();
 
   return (
@@ -821,7 +820,6 @@ function CheckoutSheet({
   cart,
   total,
   shopName,
-  shopUrl,
   customerName,
   delivery,
   orderSent,
@@ -835,7 +833,6 @@ function CheckoutSheet({
   cart: CartEntry[];
   total: number;
   shopName: string;
-  shopUrl: string;
   customerName: string;
   delivery: string;
   orderSent: boolean;
@@ -895,7 +892,7 @@ function CheckoutSheet({
         </div>
 
         {orderSent ? (
-          <OrderSentState shopName={shopName} shopUrl={shopUrl} />
+          <OrderSentState shopName={shopName} />
         ) : (
           <div className="px-5 pb-6 pt-2">
             <h2 className="font-display text-xl font-bold text-ink">Your order</h2>

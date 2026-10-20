@@ -116,7 +116,7 @@ function stripSeparators(name: string): string {
 function stripLeadingJunk(name: string): string {
   let s = name;
   // Strip leading emojis (common ranges) and misc symbols.
-  s = s.replace(/^[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{200D}]+/gu, '');
+  s = s.replace(/^(?:[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]|[\u{FE00}-\u{FE0F}]|\u{200D})+/gu, '');
   // Strip leading bullets / dashes / dots.
   s = s.replace(/^[•·*\-–—.]+\s*/u, '');
   // Strip leading list numbering: "1. ", "1) ", "1) ", "10. "

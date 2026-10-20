@@ -15,12 +15,14 @@ export async function generateQRDataURL(url: string, opts?: { width?: number; ma
 export type PosterStyle = 'bold' | 'market' | 'minimal';
 
 /* ---------- Shared print boilerplate ---------- */
-function printHtml(html: string, title: string): void {
-  const printWindow = window.open('', '_blank', 'noopener');
+function printHtml(html: string): void {
+  // No 'noopener' here: with it, window.open returns null and we can't write the poster.
+  const printWindow = window.open('', '_blank');
   if (!printWindow) {
     alert('Please allow popups to print your poster.');
     return;
   }
+  printWindow.opener = null;
   printWindow.document.write(html);
   printWindow.document.close();
 }
@@ -240,5 +242,5 @@ export function printPoster(opts: PosterOpts, style: PosterStyle = 'bold'): void
       html = boldSignPoster(opts);
       break;
   }
-  printHtml(html, `${opts.shopName} — QR Poster`);
+  printHtml(html);
 }

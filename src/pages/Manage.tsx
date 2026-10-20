@@ -295,6 +295,11 @@ export default function Manage() {
     }
   }
 
+  const cheapestItemPrice = useMemo(() => {
+    const prices = items.filter((it) => it.available && it.price > 0).map((it) => it.price);
+    return prices.length > 0 ? Math.min(...prices) : undefined;
+  }, [items]);
+
   /* ---------- Render: loading skeleton ---------- */
   if (loading) {
     return <ManageSkeleton />;
@@ -368,11 +373,6 @@ export default function Manage() {
       available: it.available,
     })),
   };
-
-  const cheapestItemPrice = useMemo(() => {
-    const prices = items.filter((it) => it.available && it.price > 0).map((it) => it.price);
-    return prices.length > 0 ? Math.min(...prices) : undefined;
-  }, [items]);
 
   const shareText = `Order from ${shop.name} here: ${shopUrl}`;
   const shareUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;

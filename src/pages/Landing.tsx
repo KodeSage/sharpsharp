@@ -77,22 +77,17 @@ const steps = [
 
 export default function Landing() {
   const [savedShop, setSavedShop] = useState<{ slug: string; token: string } | null>(null);
-  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   useEffect(() => {
     setSavedShop(getSavedShop());
   }, []);
-
-  const dismissBanner = () => {
-    setBannerDismissed(true);
-  };
 
   const forgetShop = () => {
     clearSavedShop();
     setSavedShop(null);
   };
 
-  const showBanner = savedShop && !bannerDismissed;
+  const showBanner = savedShop;
 
   return (
     <div className="min-h-screen bg-cream">

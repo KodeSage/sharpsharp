@@ -369,7 +369,6 @@ export default function HeroPhoneDemo() {
 
   // Determine which screen to show
   const showChat = phase === 'chat';
-  const showStore = phase === 'morph' || phase === 'storefront' || phase === 'tap' || phase === 'hold';
 
   return (
     <div ref={containerRef}>

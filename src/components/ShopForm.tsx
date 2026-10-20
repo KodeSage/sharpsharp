@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ArrowUp,
   ArrowDown,
@@ -113,7 +113,7 @@ export default function ShopForm({
   const [whatsapp, setWhatsapp] = useState(prefill?.whatsapp ?? '');
   const [hours, setHours] = useState(prefill?.hours ?? '');
   const [brandColor, setBrandColor] = useState(prefill?.brandColor ?? '#FF5A1F');
-  const [tagline, setTagline] = useState(prefill?.tagline ?? '');
+  const [tagline] = useState(prefill?.tagline ?? '');
   const [catalogText, setCatalogText] = useState('');
   const [items, setItems] = useState<EditableItem[]>(prefill?.items ?? []);
   const [itemsEdited, setItemsEdited] = useState(false);

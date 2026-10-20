@@ -21,3 +21,6 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Brag launch-video output (rendered video + Hyperframes project)
+brag-output*/
