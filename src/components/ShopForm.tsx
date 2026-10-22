@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowUp,
   ArrowDown,
@@ -9,15 +9,21 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
+  ImagePlus,
+  X,
+  Loader2,
 } from 'lucide-react';
 import { parseCatalog, type ParsedItem } from '@/lib/parseCatalog';
 import { normalizeWhatsapp } from '@/lib/shop';
+import { uploadShopImage } from '@/lib/supabase';
 
 export type EditableItem = {
   id: string;
   name: string;
   price: number;
   available: boolean;
+  imageUrl: string | null;
+  _uploading?: boolean;
 };
 
 export type ShopFormValues = {
@@ -28,6 +34,7 @@ export type ShopFormValues = {
   hours: string;
   brandColor: string;
   tagline: string;
+  bannerUrl: string | null;
   items: EditableItem[];
 };
 
@@ -39,7 +46,8 @@ export type ShopFormPrefill = {
   hours: string;
   brandColor: string;
   tagline: string;
-  items: { id: string; name: string; price: number; available: boolean }[];
+  bannerUrl: string | null;
+  items: { id: string; name: string; price: number; available: boolean; imageUrl: string | null }[];
 };
 
 export const CATEGORIES = [
@@ -78,6 +86,7 @@ function toEditable(parsed: ParsedItem[]): EditableItem[] {
     name: p.name,
     price: p.price,
     available: true,
+    imageUrl: null,
   }));
 }
 
@@ -114,10 +123,17 @@ export default function ShopForm({
   const [hours, setHours] = useState(prefill?.hours ?? '');
   const [brandColor, setBrandColor] = useState(prefill?.brandColor ?? '#FF5A1F');
   const [tagline, setTagline] = useState(prefill?.tagline ?? '');
+  const [bannerUrl, setBannerUrl] = useState<string | null>(prefill?.bannerUrl ?? null);
+  const [bannerUploading, setBannerUploading] = useState(false);
   const [catalogText, setCatalogText] = useState('');
   const [items, setItems] = useState<EditableItem[]>(prefill?.items ?? []);
   const [itemsEdited, setItemsEdited] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const slugGuess = useMemo(() => {
+    const base = shopName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    return base || 'shop';
+  }, [shopName]);
 
   const whatsappResult = useMemo(() => normalizeWhatsapp(whatsapp), [whatsapp]);
   const parsedPreview = useMemo(() => parseCatalog(catalogText), [catalogText]);
@@ -136,6 +152,7 @@ export default function ShopForm({
     hours: hours.trim() || 'Daily',
     brandColor,
     tagline: tagline.trim(),
+    bannerUrl,
     items,
   };
 
@@ -189,7 +206,41 @@ export default function ShopForm({
 
   function addItem() {
     setItemsEdited(true);
-    setItems((prev) => [...prev, { id: makeItemId(), name: '', price: 0, available: true }]);
+    setItems((prev) => [...prev, { id: makeItemId(), name: '', price: 0, available: true, imageUrl: null }]);
+  }
+
+  async function handleBannerUpload(file: File) {
+    setBannerUploading(true);
+    try {
+      const url = await uploadShopImage(file, slugGuess, 'banner');
+      if (url) {
+        setBannerUrl(url);
+      } else {
+        setError('Could not upload image. Please try again.');
+      }
+    } catch {
+      setError('Could not upload image. Please try again.');
+    }
+    setBannerUploading(false);
+  }
+
+  async function handleItemImageUpload(id: string, file: File) {
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, _uploading: true } : it)) as EditableItem[]);
+    try {
+      const url = await uploadShopImage(file, slugGuess, 'item');
+      if (url) {
+        setItemsEdited(true);
+        setItems((prev) => prev.map((it) => (it.id === id ? { ...it, imageUrl: url, _uploading: undefined } : it)));
+      }
+    } catch {
+      // ignore
+    }
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, _uploading: undefined } : it)) as EditableItem[]);
+  }
+
+  function removeItemImage(id: string) {
+    setItemsEdited(true);
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, imageUrl: null } : it)));
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -313,6 +364,33 @@ export default function ShopForm({
         </div>
       </Field>
 
+      {/* Banner image */}
+      <Field label="Banner image (optional)" className="mt-6">
+        {bannerUrl ? (
+          <div className="relative overflow-hidden rounded-2xl">
+            <img src={bannerUrl} alt="Shop banner" className="h-32 w-full object-cover" />
+            <button
+              type="button"
+              onClick={() => setBannerUrl(null)}
+              className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-ink/60 text-white transition hover:bg-ink/80"
+              aria-label="Remove banner"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <ImageUploadButton
+            onFile={handleBannerUpload}
+            uploading={bannerUploading}
+            label="Upload banner photo"
+            height="h-28"
+          />
+        )}
+        <p className="mt-2 text-xs text-ink/50">
+          Upload a photo of your shop, logo, or brand. It shows at the top of your shop page.
+        </p>
+      </Field>
+
       {/* Catalog paste (optional in edit mode) */}
       {showCatalogPaste && (
         <Field label="Paste your catalog" className="mt-8">
@@ -360,12 +438,15 @@ export default function ShopForm({
                   item={item}
                   index={idx}
                   total={items.length}
+                  slugGuess={slugGuess}
                   onNameChange={(v) => updateItemName(item.id, v)}
                   onPriceChange={(v) => updateItemPrice(item.id, v)}
                   onToggleAvailable={() => toggleAvailable(item.id)}
                   onDelete={() => deleteItem(item.id)}
                   onMoveUp={() => moveItem(item.id, -1)}
                   onMoveDown={() => moveItem(item.id, 1)}
+                  onImageUpload={(file) => handleItemImageUpload(item.id, file)}
+                  onRemoveImage={() => removeItemImage(item.id)}
                 />
               ))}
             </div>
@@ -440,32 +521,86 @@ function ItemCard({
   item,
   index,
   total,
+  slugGuess,
   onNameChange,
   onPriceChange,
   onToggleAvailable,
   onDelete,
   onMoveUp,
   onMoveDown,
+  onImageUpload,
+  onRemoveImage,
 }: {
   item: EditableItem;
   index: number;
   total: number;
+  slugGuess: string;
   onNameChange: (v: string) => void;
   onPriceChange: (v: string) => void;
   onToggleAvailable: () => void;
   onDelete: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
+  onImageUpload: (file: File) => void;
+  onRemoveImage: () => void;
 }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+
   return (
     <div
       className={`rounded-2xl bg-white p-3 shadow-soft ${
         !item.available ? 'opacity-50' : ''
       }`}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-start gap-2">
+        {/* Item image */}
+        <div className="shrink-0">
+          {item.imageUrl ? (
+            <div className="relative">
+              <img
+                src={item.imageUrl}
+                alt={item.name || 'Item'}
+                className="h-14 w-14 rounded-xl object-cover"
+              />
+              <button
+                type="button"
+                onClick={onRemoveImage}
+                className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-ink/70 text-white transition hover:bg-ink"
+                aria-label="Remove photo"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={item._uploading}
+              className="flex h-14 w-14 items-center justify-center rounded-xl border-2 border-dashed border-ink/15 text-ink/30 transition hover:border-primary/40 hover:text-primary disabled:opacity-50"
+              aria-label="Add photo"
+            >
+              {item._uploading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <ImagePlus className="h-5 w-5" />
+              )}
+            </button>
+          )}
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onImageUpload(file);
+              e.target.value = '';
+            }}
+          />
+        </div>
+
         {/* Reorder */}
-        <div className="flex flex-col">
+        <div className="flex flex-col pt-1">
           <button
             type="button"
             onClick={onMoveUp}
@@ -538,6 +673,54 @@ function ItemCard({
         )}
       </button>
     </div>
+  );
+}
+
+function ImageUploadButton({
+  onFile,
+  uploading,
+  label,
+  height = 'h-24',
+}: {
+  onFile: (file: File) => void;
+  uploading: boolean;
+  label: string;
+  height?: string;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => fileRef.current?.click()}
+        disabled={uploading}
+        className={`tap-target flex w-full ${height} items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-ink/15 text-sm font-semibold text-ink/50 transition hover:border-primary/40 hover:text-primary disabled:opacity-50`}
+      >
+        {uploading ? (
+          <>
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Uploading…
+          </>
+        ) : (
+          <>
+            <ImagePlus className="h-5 w-5" />
+            {label}
+          </>
+        )}
+      </button>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) onFile(file);
+          e.target.value = '';
+        }}
+      />
+    </>
   );
 }
 

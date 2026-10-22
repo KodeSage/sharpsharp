@@ -419,9 +419,20 @@ export default function Storefront() {
     <div className="min-h-screen bg-cream pb-24">
       {/* Full header band — condenses on scroll (transform only) */}
       <div
-        className="sticky top-0 z-10 px-5 pb-6 pt-8 text-white"
+        className="sticky top-0 z-10 text-white"
         style={{ backgroundColor: shop.brand_color }}
       >
+        {shop.banner_url && (
+          <div className="relative h-32 w-full overflow-hidden sm:h-40">
+            <img
+              src={shop.banner_url}
+              alt={shop.name}
+              className="h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/40" />
+          </div>
+        )}
+        <div className="px-5 pb-6 pt-8">
         <div className="relative mx-auto max-w-xl">
           {/* Full header (always rendered — provides stable height) */}
           <motion.div
@@ -504,6 +515,7 @@ export default function Storefront() {
               </span>
             )}
           </motion.div>
+        </div>
         </div>
       </div>
 
@@ -675,14 +687,22 @@ function ItemCard({
 
   return (
     <div className="flex items-center gap-3 rounded-2xl bg-white p-3.5 shadow-soft">
-      {/* Emoji tile */}
-      <div
-        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-2xl"
-        style={{ backgroundColor: brandColor + '15' }}
-        aria-hidden="true"
-      >
-        {emoji}
-      </div>
+      {/* Image tile or emoji fallback */}
+      {item.image_url ? (
+        <img
+          src={item.image_url}
+          alt={item.name}
+          className="h-14 w-14 shrink-0 rounded-2xl object-cover"
+        />
+      ) : (
+        <div
+          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-2xl"
+          style={{ backgroundColor: brandColor + '15' }}
+          aria-hidden="true"
+        >
+          {emoji}
+        </div>
+      )}
 
       {/* Name + description */}
       <div className="min-w-0 flex-1">

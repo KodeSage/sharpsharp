@@ -253,12 +253,14 @@ export default function Manage() {
         hours: values.hours,
         brand_color: values.brandColor,
         tagline: values.tagline,
+        banner_url: values.bannerUrl,
         items: values.items
           .filter((it) => it.name.trim() && it.price > 0)
           .map((it) => ({
             name: it.name.trim(),
             price: it.price,
             available: it.available,
+            image_url: it.imageUrl,
           })),
       };
 
@@ -366,11 +368,13 @@ export default function Manage() {
     hours: shop.hours,
     brandColor: shop.brand_color,
     tagline: shop.tagline ?? '',
+    bannerUrl: shop.banner_url,
     items: items.map((it) => ({
       id: it.id,
       name: it.name,
       price: it.price,
       available: it.available,
+      imageUrl: it.image_url,
     })),
   };
 

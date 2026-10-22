@@ -115,6 +115,7 @@ function toEditable(parsed: ParsedItem[]): EditableItem[] {
     name: p.name,
     price: p.price,
     available: true,
+    imageUrl: null,
   }));
 }
 
@@ -179,7 +180,7 @@ export default function Create() {
   }
 
   function addItemFromUnparsed(name: string) {
-    setItems((prev) => [...prev, { id: makeItemId(), name, price: 0, available: true }]);
+    setItems((prev) => [...prev, { id: makeItemId(), name, price: 0, available: true, imageUrl: null }]);
   }
 
   function updateItemName(id: string, name: string) {
@@ -220,6 +221,7 @@ export default function Create() {
             name: it.name.trim(),
             price: it.price,
             available: it.available,
+            image_url: it.imageUrl,
           })),
       };
 
@@ -489,7 +491,7 @@ export default function Create() {
 
               <button
                 type="button"
-                onClick={() => setItems((prev) => [...prev, { id: makeItemId(), name: '', price: 0, available: true }])}
+                onClick={() => setItems((prev) => [...prev, { id: makeItemId(), name: '', price: 0, available: true, imageUrl: null }])}
                 className="mt-3 flex tap-target w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-ink/15 text-sm font-semibold text-ink/60 transition hover:border-primary/40 hover:text-primary"
               >
                 <Plus className="h-4 w-4" />

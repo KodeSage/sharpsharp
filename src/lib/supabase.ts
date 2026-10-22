@@ -21,6 +21,7 @@ export type Shop = {
   hours: string;
   tagline: string | null;
   brand_color: string;
+  banner_url: string | null;
   created_at: string;
 };
 
@@ -32,8 +33,30 @@ export type Item = {
   description: string | null;
   position: number;
   available: boolean;
+  image_url: string | null;
   created_at: string;
 };
+
+const SUPABASE_URL = supabaseUrl.replace(/\/$/, '');
+
+export function publicImagePath(path: string): string {
+  return `${SUPABASE_URL}/storage/v1/object/public/${path}`;
+}
+
+export async function uploadShopImage(
+  file: File,
+  slug: string,
+  kind: 'banner' | 'item'
+): Promise<string | null> {
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+  const fileName = `${slug}/${kind}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await supabase.storage
+    .from('shop-images')
+    .upload(fileName, file, { contentType: file.type, upsert: false });
+
+  if (error) return null;
+  return publicImagePath(`shop-images/${fileName}`);
+}
 
 export type ShopStats = {
   total_views: number;
