@@ -12,6 +12,8 @@ export function usePageMeta(title: string, description?: string): void {
       setMeta('description', description);
       setMetaProperty('og:title', title);
       setMetaProperty('og:description', description);
+      setMetaProperty('og:image', `${window.location.origin}/og-image.png`);
+      setMeta('twitter:image', `${window.location.origin}/og-image.png`);
     }
   }, [title, description]);
 }
